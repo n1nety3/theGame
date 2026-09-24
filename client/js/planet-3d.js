@@ -55,7 +55,7 @@ class Planet3DViewer {
     // 2. Wireframe Cage (Planetary Geodesic / Latitude-Longitude Grid)
     const wireGeo = new THREE.SphereGeometry(80, 24, 18);
     const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
+      color: 0xffe600,
       wireframe: true,
       transparent: true,
       opacity: 0.28
@@ -125,7 +125,7 @@ class Planet3DViewer {
     this.selectedZoneId = zoneId;
     this.markers.forEach(m => {
       if (m.userData.zoneId === zoneId) {
-        m.material.color.setHex(0x00f0ff);
+        m.material.color.setHex(0xffe600);
         m.scale.set(2.2, 2.2, 2.2);
       } else {
         const zone = m.userData.zone;
@@ -186,6 +186,31 @@ class Planet3DViewer {
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h);
     });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+      const isResetKey = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13 ||
+                         e.code === 'Numpad0' || (e.location === 3 && (e.key === '0' || e.key === 'Insert')) ||
+                         e.keyCode === 96 || e.key === '0' || e.code === 'Digit0' || e.keyCode === 48;
+      if (isResetKey) {
+        e.preventDefault();
+        this.resetSphereToDefault();
+      }
+    });
+  }
+
+  resetSphereToDefault() {
+    this.isDragging = false;
+    if (this.planetGroup) {
+      this.planetGroup.position.set(0, 0, 0);
+      this.planetGroup.rotation.set(0, 0, 0);
+    }
+    if (this.camera) {
+      this.camera.position.set(0, 0, 240);
+      this.camera.lookAt(0, 0, 0);
+    }
   }
 
   animate() {

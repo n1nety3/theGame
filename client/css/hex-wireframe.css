@@ -1,0 +1,255 @@
+:root {
+  --bg-space: #050814;
+
+  /* Core Game Accent (Yellow) */
+  --core-accent: #ffe600;
+  --core-accent-bright: #fff066;
+  --core-accent-glow: rgba(255, 230, 0, 0.4);
+  --core-accent-subtle: rgba(255, 230, 0, 0.12);
+  --color-yellow: #ffe600;
+
+  --color-cyan: #00f0ff;
+  --color-violet: #a855f7;
+  --color-amber: #f59e0b;
+  --color-amber-bright: #fbbf24;
+  --color-emerald: #10b981;
+  --color-crimson: #ef4444;
+  --color-orange: #f97316;
+  --color-teal: #06b6d4;
+  --color-slate: #334155;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Segoe UI Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-space);
+  font-family: var(--font-mono);
+  color: #e2e8f0;
+}
+
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  cursor: grab;
+}
+
+#canvas-container:active {
+  cursor: grabbing;
+}
+
+/* --- HUD TOP BAR --- */
+.hud-top-bar {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(9, 21, 43, 0.75);
+  backdrop-filter: blur(8px);
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 230, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 230, 0, 0.2);
+}
+
+.hud-logo {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffe600;
+  text-shadow: 0 0 10px rgba(255, 230, 0, 0.6);
+}
+
+.hud-badge-hex {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffe600;
+  letter-spacing: 1px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: 12px;
+}
+
+.hud-mode-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(9, 21, 43, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 230, 0, 0.35);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.12);
+  pointer-events: auto;
+}
+
+.mode-btn {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  color: #ffe600;
+  background: rgba(255, 230, 0, 0.1);
+  border-color: rgba(255, 230, 0, 0.3);
+}
+
+.mode-active {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffe600;
+  background: rgba(255, 230, 0, 0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 230, 0, 0.5);
+  text-shadow: 0 0 8px rgba(255, 230, 0, 0.35);
+}
+
+/* --- TELEMETRY PANEL --- */
+.hud-telemetry-panel {
+  position: absolute;
+  top: 76px;
+  right: 20px;
+  width: 290px;
+  background: rgba(9, 21, 43, 0.82);
+  backdrop-filter: blur(8px);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 230, 0, 0.35);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 230, 0, 0.1);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.telemetry-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffe600;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 230, 0, 0.3);
+  padding-bottom: 6px;
+  text-shadow: 0 0 8px rgba(255, 230, 0, 0.3);
+}
+
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.telemetry-row .label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.telemetry-row .val {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.telemetry-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 10px 0;
+}
+
+.telemetry-system-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+
+.system-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #f59e0b;
+  margin-bottom: 5px;
+}
+
+.telemetry-subtext {
+  font-size: 9px;
+  color: #64748b;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.telemetry-stats {
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+}
+
+/* --- CONTROLS PANEL --- */
+.hud-controls-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(9, 21, 43, 0.82);
+  backdrop-filter: blur(8px);
+  padding: 14px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 230, 0, 0.08);
+  z-index: 10;
+  pointer-events: none;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.control-row {
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+.control-row .key {
+  display: inline-block;
+  background: rgba(255, 230, 0, 0.12);
+  border: 1px solid rgba(255, 230, 0, 0.4);
+  color: #ffe600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 10px;
+  min-width: 48px;
+  text-align: center;
+}

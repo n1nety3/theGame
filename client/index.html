@@ -3,27 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Game - Planetary Grid Wireframe</title>
+  <title>The Game - Planetary Grid Architecture</title>
   <link rel="stylesheet" href="/css/wireframe.css">
 </head>
 <body>
 
-  <!-- Fullscreen Wireframe Viewport (Centered on 1 Block with neighbouring blocks partially visible) -->
-  <div id="viewport" class="viewport">
-    <div id="world" class="world">
-      <!-- Zone Container (3x3 Blocks) -->
-      <div id="zone-container" class="zone-boundary">
-        <div class="zone-badge">ZONE-01 [3x3 BLOCKS]</div>
-        <div id="zone-grid" class="zone-grid">
-          <!-- 3x3 Blocks (each 10x10 Plots) rendered via JS -->
-        </div>
-      </div>
-    </div>
+  <style>
+    .mode-switcher-bar {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(9, 21, 43, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 230, 0, 0.4);
+      box-shadow: 0 0 12px rgba(255, 230, 0, 0.15);
+      z-index: 10;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .mode-switcher-bar a {
+      color: #ffe600;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 230, 0, 0.35);
+      background: rgba(255, 230, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+    .mode-switcher-bar a:hover {
+      background: rgba(255, 230, 0, 0.25);
+      box-shadow: 0 0 10px rgba(255, 230, 0, 0.3);
+    }
+  </style>
+  <div class="mode-switcher-bar">
+    <span style="color:#ffe600; font-weight:600;">Active: Square Grid</span>
+    <span style="color:#475569">|</span>
+    <a href="/hex_wireframe.html">🔷 Switch to Hexagonal Grid</a>
   </div>
 
-  <!-- Minimal floating tooltip on plot hover -->
-  <div id="plot-tooltip" class="plot-tooltip"></div>
+  <!-- Fullscreen 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
 
+  <!-- Three.js (Local offline copy with CDN fallback) -->
+  <script src="/js/three.min.js"></script>
+  <script>
+    if (!window.THREE) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Core Planetary Grid Engine -->
   <script src="/js/wireframe-app.js"></script>
 </body>
 </html>

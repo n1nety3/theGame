@@ -9,25 +9,37 @@ const CLIENT_DIR = path.join(__dirname, '..', 'client');
 // --- In-Memory Game World State (Planet -> Zone -> Block -> Plot) ---
 const PLANET_ID = "PLANET-PRIME-01";
 const TOTAL_ZONES = 120; // Hundreds of zones on the planet sphere
+const INITIAL_ZONE_ID = 66;
+const INITIAL_BLOCK_ROW = 1;
+const INITIAL_BLOCK_COL = 1;
+
+function isBlockLocked(zoneId, bRow, bCol) {
+  return !(Number(zoneId) === INITIAL_ZONE_ID && Number(bRow) === INITIAL_BLOCK_ROW && Number(bCol) === INITIAL_BLOCK_COL);
+}
 
 // Generate Zone catalog
 const zones = {};
 for (let i = 0; i < TOTAL_ZONES; i++) {
-  const theta = (Math.PI * (i % 12)) / 12; // latitude approx
-  const phi = (2 * Math.PI * Math.floor(i / 12)) / 10; // longitude approx
+  const row = Math.floor(i / 12);
+  const col = i % 12;
+  const lat = (-90 + (row + 0.5) * 18).toFixed(1);
+  const lng = (-180 + (col + 0.5) * 30).toFixed(1);
+  const isLocked = (i !== INITIAL_ZONE_ID);
   zones[i] = {
     id: i,
     code: `Z-${String(i).padStart(3, '0')}`,
-    name: `Sector-${String.fromCharCode(65 + (i % 26))}${Math.floor(i / 26) + 1}`,
-    row: Math.floor(i / 12),
-    col: i % 12,
+    name: isLocked ? `Locked-Sector-${String.fromCharCode(65 + (i % 26))}${Math.floor(i / 26) + 1}` : `Sector-Alpha (Prime)`,
+    isLocked,
+    row,
+    col,
     blocksCount: 9, // 3x3
     totalPlots: 900,
-    activeFunctions: Math.floor(Math.random() * 80) + 10,
-    controlledBy: i % 5 === 0 ? "System-Core" : (i % 7 === 0 ? "Syndicate" : "Open-Frontier"),
+    activeFunctions: isLocked ? 0 : 100,
+    controlledBy: isLocked ? "Locked-Sector" : "Active-Frontier",
+    colorHex: isLocked ? "#243246" : "#ffe600",
     coords: {
-      lat: (theta * (180 / Math.PI) - 90).toFixed(2),
-      lng: (phi * (180 / Math.PI) - 180).toFixed(2)
+      lat,
+      lng
     }
   };
 }
@@ -40,70 +52,23 @@ function getOrCreateBlock(zoneId, bRow, bCol) {
   const key = `${zoneId}_${bRow}_${bCol}`;
   if (blocksCache[key]) return blocksCache[key];
 
-  // Generate 10x10 plots (100 plots)
+  const locked = isBlockLocked(zoneId, bRow, bCol);
+
+  // Generate 10x10 plots (100 plots) - ALL PLOTS ARE THE EXACT SAME INITIAL STATE & COLOR
   const plots = [];
   for (let r = 0; r < 10; r++) {
     const row = [];
     for (let c = 0; c < 10; c++) {
-      // Logic:
-      // Some plots are system defined & locked
-      // Some are system defined & manipulable
-      // Some are user defined & manipulable
-      // Rest are empty
-      const rand = (r * 10 + c + zoneId * 7 + bRow * 13 + bCol * 17) % 100;
-      let owner = "system";
-      let manipulable = false;
-      let funcType = "none";
-      let funcName = "Unassigned";
-      let status = "empty";
-
-      if (rand < 12) {
-        // System locked function
-        owner = "system";
-        manipulable = false;
-        funcType = "energy_node";
-        funcName = "Geothermal Core";
-        status = "system_locked";
-      } else if (rand < 24) {
-        // System defined, user manipulable
-        owner = "system";
-        manipulable = true;
-        funcType = "relay_gate";
-        funcName = "Orbital Relay Gate";
-        status = "system_open";
-      } else if (rand < 45) {
-        // User defined & manipulable
-        owner = "user";
-        manipulable = true;
-        funcType = "mineral_extractor";
-        funcName = "Quantum Refinery";
-        status = "user_active";
-      } else if (rand < 55) {
-        // User defined but locked / fortified
-        owner = "user";
-        manipulable = false;
-        funcType = "defense_pylon";
-        funcName = "Aegis Shield Pylon";
-        status = "user_locked";
-      } else {
-        // Empty square
-        owner = "none";
-        manipulable = true;
-        funcType = "none";
-        funcName = "Empty Plot";
-        status = "empty";
-      }
-
       row.push({
         id: `P-Z${zoneId}-B${bRow}${bCol}-R${r}C${c}`,
         row: r,
         col: c,
-        owner,
-        manipulable,
-        funcType,
-        funcName,
-        status,
-        powerLevel: Math.floor(Math.random() * 100),
+        owner: locked ? "locked" : "user",
+        manipulable: !locked,
+        funcType: "none",
+        funcName: locked ? "Locked Plot" : "Plot",
+        status: locked ? "locked" : "empty",
+        powerLevel: 0,
         lastModified: new Date().toISOString()
       });
     }
@@ -115,6 +80,7 @@ function getOrCreateBlock(zoneId, bRow, bCol) {
     bRow: Number(bRow),
     bCol: Number(bCol),
     code: `BLK-[${bRow},${bCol}]`,
+    isLocked: locked,
     plotsCount: 100,
     plots
   };
@@ -134,8 +100,13 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+  let pathname = '/';
+  try {
+    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    pathname = parsedUrl.pathname;
+  } catch (e) {
+    pathname = req.url.split('?')[0];
+  }
 
   // CORS headers for local development
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -147,6 +118,14 @@ const server = http.createServer((req, res) => {
     res.end();
     return;
   }
+
+  // Handle client connection abort / close
+  req.on('error', (err) => {
+    // Suppress connection reset errors
+  });
+  res.on('error', (err) => {
+    // Suppress connection reset errors
+  });
 
   // --- API Endpoints ---
   if (pathname === '/api/info') {
@@ -235,6 +214,14 @@ const server = http.createServer((req, res) => {
       try {
         const data = JSON.parse(body);
         const { zoneId, bRow, bCol, row, col, manipulable, funcType, funcName, owner } = data;
+
+        // Check if block is locked
+        if (isBlockLocked(zoneId, bRow, bCol)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: "Block is locked. Only the initial block can be modified." }));
+          return;
+        }
+
         const block = getOrCreateBlock(zoneId, bRow, bCol);
         const plot = block.plots[row][col];
 
@@ -274,6 +261,8 @@ const server = http.createServer((req, res) => {
   let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
   if (safePath === '/' || safePath === '\\') {
     safePath = '/index.html';
+  } else if (safePath === '/hex' || safePath === '\\hex') {
+    safePath = '/hex_wireframe.html';
   }
 
   const filePath = path.join(CLIENT_DIR, safePath);
@@ -290,8 +279,24 @@ const server = http.createServer((req, res) => {
 
     res.writeHead(200, { 'Content-Type': contentType });
     const stream = fs.createReadStream(filePath);
+    stream.on('error', () => {
+      if (!res.headersSent) res.writeHead(500);
+      res.end();
+    });
     stream.pipe(res);
   });
+});
+
+server.on('error', (err) => {
+  console.error('[Server Error]:', err.message);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught Exception]:', err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Unhandled Rejection]:', reason);
 });
 
 server.listen(PORT, () => {

@@ -3,34 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Game - Planetary Grid Wireframe (Standalone)</title>
+  <title>The Game - Planetary Grid Architecture (Standalone)</title>
   <style>
     :root {
-      --bg-space: #060913;
-      --zone-border-color: #a855f7;
-      --zone-fill: #130a24;
-      --zone-glow: 0 0 25px rgba(168, 85, 247, 0.35);
+      --bg-space: #050814;
 
-      --block-border-color: #f59e0b;
-      --block-fill: #09152b;
-      --block-glow: 0 0 18px rgba(245, 158, 11, 0.25);
+      /* Core Game Accent (Yellow) */
+      --core-accent: #ffe600;
+      --core-accent-bright: #fff066;
+      --core-accent-glow: rgba(255, 230, 0, 0.4);
+      --core-accent-subtle: rgba(255, 230, 0, 0.12);
+      --color-yellow: #ffe600;
 
-      --plot-sys-locked-border: #ef4444;
-      --plot-sys-locked-fill: #3e0b0b;
+      --color-cyan: #00f0ff;
+      --color-violet: #a855f7;
+      --color-amber: #f59e0b;
+      --color-amber-bright: #fbbf24;
+      --color-emerald: #10b981;
+      --color-crimson: #ef4444;
+      --color-orange: #f97316;
+      --color-teal: #06b6d4;
+      --color-slate: #334155;
 
-      --plot-sys-open-border: #f97316;
-      --plot-sys-open-fill: #3b1704;
-
-      --plot-usr-active-border: #10b981;
-      --plot-usr-active-fill: #06402b;
-
-      --plot-usr-locked-border: #06b6d4;
-      --plot-usr-locked-fill: #082e3d;
-
-      --plot-empty-border: #2e3a50;
-      --plot-empty-fill: #0c1424;
-
-      --font-mono: 'JetBrains Mono', 'Fira Code', 'Segoe UI Mono', monospace;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Segoe UI Mono', monospace;
     }
 
     * {
@@ -49,542 +44,30 @@
       color: #e2e8f0;
     }
 
-    body {
-      background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 32px 32px;
-    }
-
-    .viewport {
+    #canvas-container {
       width: 100vw;
       height: 100vh;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      cursor: default;
+    }
+
+    #canvas-container.zone-view {
       cursor: grab;
     }
 
-    .viewport:active {
+    #canvas-container.zone-view:active {
       cursor: grabbing;
     }
 
-    .world {
-      position: absolute;
-      transform-origin: center center;
-      transition: transform 0.05s ease-out;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .zone-boundary {
-      border: 3.5px solid var(--zone-border-color);
-      box-shadow: var(--zone-glow);
-      background-color: var(--zone-fill);
-      border-radius: 10px;
-      padding: 24px;
-      position: relative;
-      display: inline-block;
-    }
-
-    .zone-badge {
-      position: absolute;
-      top: -14px;
-      left: 30px;
-      background: #7e22ce;
-      color: #fff;
-      border: 1px solid #d8b4fe;
-      padding: 2px 14px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      border-radius: 4px;
-      letter-spacing: 1.5px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .zone-grid {
-      display: grid;
-      grid-template-columns: repeat(3, auto);
-      grid-template-rows: repeat(3, auto);
-      gap: 24px;
-    }
-
-    .block-container {
-      border: 2px solid var(--block-border-color);
-      box-shadow: var(--block-glow);
-      background-color: var(--block-fill);
-      border-radius: 6px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .block-container.center-block {
-      border-color: #fbbf24;
-      box-shadow: 0 0 25px rgba(251, 191, 36, 0.45);
-    }
-
-    .block-header-tag {
-      position: absolute;
-      top: -11px;
-      left: 16px;
-      background: #b45309;
-      color: #fef3c7;
-      border: 1px solid #f59e0b;
-      padding: 1px 8px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      border-radius: 3px;
-      letter-spacing: 1px;
-    }
-
-    .block-container.center-block .block-header-tag {
-      background: #d97706;
-      border-color: #fbbf24;
-      color: #fff;
-    }
-
-    .block-matrix-wrap {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .col-coords {
-      display: flex;
-      margin-left: 20px;
-      margin-bottom: 4px;
-    }
-
-    .col-num {
-      width: 44px;
-      text-align: center;
-      font-size: 0.65rem;
-      color: #64748b;
-      font-weight: 600;
-    }
-
-    .matrix-main-row {
-      display: flex;
-    }
-
-    .row-coords {
-      display: flex;
-      flex-direction: column;
-      margin-right: 4px;
-    }
-
-    .row-num {
-      height: 44px;
-      width: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      color: #64748b;
-      font-weight: 600;
-    }
-
-    .plot-grid {
-      display: grid;
-      grid-template-columns: repeat(10, 44px);
-      grid-template-rows: repeat(10, 44px);
-      gap: 3px;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 5px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .plot-cell:nth-child(even) {
-      filter: brightness(0.95);
-    }
-
-    .plot-cell {
-      width: 44px;
-      height: 44px;
-      border-radius: 3px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .plot-cell:hover {
-      transform: scale(1.18);
-      z-index: 20;
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
-    }
-
-    .plot-icon {
-      font-size: 0.85rem;
-      line-height: 1;
-    }
-
-    .plot-sub {
-      font-size: 0.55rem;
-      opacity: 0.75;
-      margin-top: 2px;
-    }
-
-    .plot-cell.sys-locked {
-      background-color: var(--plot-sys-locked-fill);
-      border: 2px solid var(--plot-sys-locked-border);
-      background-image: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.2) 0px, rgba(239, 68, 68, 0.2) 3px, transparent 3px, transparent 7px);
-    }
-
-    .plot-cell.sys-open {
-      background-color: var(--plot-sys-open-fill);
-      border: 2px solid var(--plot-sys-open-border);
-    }
-
-    .plot-cell.usr-active {
-      background-color: var(--plot-usr-active-fill);
-      border: 2px solid var(--plot-usr-active-border);
-      box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.35);
-    }
-
-    .plot-cell.usr-locked {
-      background-color: var(--plot-usr-locked-fill);
-      border: 2px solid var(--plot-usr-locked-border);
-    }
-
-    .plot-cell.empty {
-      background-color: var(--plot-empty-fill);
-      border: 1px dashed var(--plot-empty-border);
-      color: #475569;
-    }
-
-    .plot-tooltip {
-      position: fixed;
-      display: none;
-      pointer-events: none;
-      background: rgba(13, 18, 36, 0.95);
-      border: 1px solid #38bdf8;
-      color: #f1f5f9;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      z-index: 9999;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-      white-space: nowrap;
-    }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+  <div id="canvas-container"></div>
 
-  <div id="viewport" class="viewport">
-    <div id="world" class="world">
-      <div id="zone-container" class="zone-boundary">
-        <div class="zone-badge">ZONE-01 [3x3 BLOCKS]</div>
-        <div id="zone-grid" class="zone-grid"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="plot-tooltip" class="plot-tooltip"></div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const viewport = document.getElementById('viewport');
-      const world = document.getElementById('world');
-      const zoneGrid = document.getElementById('zone-grid');
-      const tooltip = document.getElementById('plot-tooltip');
-
-      let scale = 1;
-      let translateX = 0;
-      let translateY = 0;
-      let isDragging = false;
-      let startX = 0;
-      let startY = 0;
-
-      init();
-
-      function init() {
-        buildZoneGrid();
-        setupTransformAndFraming();
-        setupInteraction();
-      }
-
-      function buildZoneGrid() {
-        zoneGrid.innerHTML = '';
-        for (let br = 0; br < 3; br++) {
-          for (let bc = 0; bc < 3; bc++) {
-            const isCenter = (br === 1 && bc === 1);
-            const blockEl = createBlockElement(br, bc, isCenter);
-            zoneGrid.appendChild(blockEl);
-          }
-        }
-      }
-
-      function createBlockElement(bRow, bCol, isCenter) {
-        const block = document.createElement('div');
-        block.className = `block-container ${isCenter ? 'center-block' : 'neighbor-block'}`;
-        block.id = `block-${bRow}-${bCol}`;
-
-        const tag = document.createElement('div');
-        tag.className = 'block-header-tag';
-        tag.textContent = isCenter ? `★ BLOCK [${bRow},${bCol}] (PRIMARY)` : `BLOCK [${bRow},${bCol}]`;
-        block.appendChild(tag);
-
-        const matrixWrap = document.createElement('div');
-        matrixWrap.className = 'block-matrix-wrap';
-
-        const colCoords = document.createElement('div');
-        colCoords.className = 'col-coords';
-        for (let c = 0; c < 10; c++) {
-          const colNum = document.createElement('div');
-          colNum.className = 'col-num';
-          colNum.textContent = c;
-          colCoords.appendChild(colNum);
-        }
-        matrixWrap.appendChild(colCoords);
-
-        const mainRow = document.createElement('div');
-        mainRow.className = 'matrix-main-row';
-
-        const rowCoords = document.createElement('div');
-        rowCoords.className = 'row-coords';
-        for (let r = 0; r < 10; r++) {
-          const rowNum = document.createElement('div');
-          rowNum.className = 'row-num';
-          rowNum.textContent = r;
-          rowCoords.appendChild(rowNum);
-        }
-        mainRow.appendChild(rowCoords);
-
-        const plotGrid = document.createElement('div');
-        plotGrid.className = 'plot-grid';
-
-        for (let r = 0; r < 10; r++) {
-          for (let c = 0; c < 10; c++) {
-            const plotData = generatePlotData(bRow, bCol, r, c);
-            const cell = createPlotCell(plotData);
-            plotGrid.appendChild(cell);
-          }
-        }
-
-        mainRow.appendChild(plotGrid);
-        matrixWrap.appendChild(mainRow);
-        block.appendChild(matrixWrap);
-
-        return block;
-      }
-
-      function generatePlotData(bRow, bCol, r, c) {
-        const seed = (bRow * 31 + bCol * 17 + r * 10 + c) % 100;
-        let owner = 'none';
-        let manipulable = true;
-        let funcType = 'none';
-        let funcName = 'Empty Plot';
-        let status = 'empty';
-
-        if (seed < 14) {
-          owner = 'system';
-          manipulable = false;
-          funcType = 'geothermal_core';
-          funcName = 'Geothermal Core';
-          status = 'system_locked';
-        } else if (seed < 28) {
-          owner = 'system';
-          manipulable = true;
-          funcType = 'orbital_gate';
-          funcName = 'Orbital Relay Gate';
-          status = 'system_open';
-        } else if (seed < 52) {
-          owner = 'user';
-          manipulable = true;
-          funcType = 'quantum_refinery';
-          funcName = 'Quantum Refinery';
-          status = 'user_active';
-        } else if (seed < 64) {
-          owner = 'user';
-          manipulable = false;
-          funcType = 'defense_turret';
-          funcName = 'Aegis Defense Pylon';
-          status = 'user_locked';
-        } else {
-          owner = 'none';
-          manipulable = true;
-          funcType = 'none';
-          funcName = 'Empty Plot';
-          status = 'empty';
-        }
-
-        return { bRow, bCol, r, c, owner, manipulable, funcType, funcName, status };
-      }
-
-      function createPlotCell(plot) {
-        const cell = document.createElement('div');
-        cell.className = `plot-cell ${getPlotClass(plot.status)}`;
-        cell.dataset.status = plot.status;
-        cell.dataset.r = plot.r;
-        cell.dataset.c = plot.c;
-        cell.dataset.bRow = plot.bRow;
-        cell.dataset.bCol = plot.bCol;
-        cell.dataset.funcName = plot.funcName;
-        cell.dataset.manipulable = plot.manipulable;
-
-        let icon = '·';
-        if (plot.status === 'system_locked') icon = '🔒';
-        else if (plot.status === 'system_open') icon = '⚙️';
-        else if (plot.status === 'user_active') icon = '⚡';
-        else if (plot.status === 'user_locked') icon = '🛡️';
-
-        cell.innerHTML = `
-          <span class="plot-icon">${icon}</span>
-          <span class="plot-sub">${plot.r},${plot.c}</span>
-        `;
-
-        cell.addEventListener('mouseenter', (e) => {
-          showTooltip(e, plot);
-        });
-
-        cell.addEventListener('mousemove', (e) => {
-          moveTooltip(e);
-        });
-
-        cell.addEventListener('mouseleave', () => {
-          hideTooltip();
-        });
-
-        cell.addEventListener('click', (e) => {
-          e.stopPropagation();
-          cyclePlotState(cell, plot);
-        });
-
-        return cell;
-      }
-
-      function getPlotClass(status) {
-        switch (status) {
-          case 'system_locked': return 'sys-locked';
-          case 'system_open': return 'sys-open';
-          case 'user_active': return 'usr-active';
-          case 'user_locked': return 'usr-locked';
-          default: return 'empty';
-        }
-      }
-
-      function cyclePlotState(cell, plot) {
-        if (plot.status === 'empty') {
-          plot.status = 'user_active';
-          plot.owner = 'user';
-          plot.manipulable = true;
-          plot.funcName = 'Quantum Extractor';
-        } else if (plot.status === 'user_active') {
-          plot.status = 'system_open';
-          plot.owner = 'system';
-          plot.manipulable = true;
-          plot.funcName = 'Orbital Gate';
-        } else if (plot.status === 'system_open') {
-          plot.status = 'system_locked';
-          plot.owner = 'system';
-          plot.manipulable = false;
-          plot.funcName = 'Protected Core';
-        } else {
-          plot.status = 'empty';
-          plot.owner = 'none';
-          plot.manipulable = true;
-          plot.funcName = 'Empty Plot';
-        }
-
-        cell.className = `plot-cell ${getPlotClass(plot.status)}`;
-        let icon = '·';
-        if (plot.status === 'system_locked') icon = '🔒';
-        else if (plot.status === 'system_open') icon = '⚙️';
-        else if (plot.status === 'user_active') icon = '⚡';
-        else if (plot.status === 'user_locked') icon = '🛡️';
-
-        cell.querySelector('.plot-icon').textContent = icon;
-        showTooltip({ clientX: tooltip.dataset.x, clientY: tooltip.dataset.y }, plot);
-      }
-
-      function showTooltip(e, plot) {
-        tooltip.dataset.x = e.clientX;
-        tooltip.dataset.y = e.clientY;
-        const manipText = plot.manipulable ? '✅ Manipulable' : '🔒 Locked (System)';
-        tooltip.innerHTML = `
-          <strong>Plot [${plot.r}, ${plot.c}]</strong> in Block [${plot.bRow}, ${plot.bCol}]<br>
-          Function: <em>${plot.funcName}</em> (${plot.status.replace('_', ' ').toUpperCase()})<br>
-          Status: ${manipText}
-        `;
-        tooltip.style.display = 'block';
-        moveTooltip(e);
-      }
-
-      function moveTooltip(e) {
-        tooltip.style.left = `${e.clientX + 14}px`;
-        tooltip.style.top = `${e.clientY + 14}px`;
-      }
-
-      function hideTooltip() {
-        tooltip.style.display = 'none';
-      }
-
-      function setupTransformAndFraming() {
-        const centerBlock = document.getElementById('block-1-1');
-        if (!centerBlock) return;
-
-        const vWidth = viewport.clientWidth;
-        const vHeight = viewport.clientHeight;
-        const blockHeight = centerBlock.offsetHeight || 520;
-
-        const targetBlockHeightOnScreen = vHeight * 0.68;
-        scale = targetBlockHeightOnScreen / blockHeight;
-        scale = Math.max(0.6, Math.min(scale, 1.8));
-
-        translateX = 0;
-        translateY = 0;
-        applyTransform();
-      }
-
-      function applyTransform() {
-        world.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-      }
-
-      function setupInteraction() {
-        window.addEventListener('resize', () => {
-          setupTransformAndFraming();
-        });
-
-        viewport.addEventListener('mousedown', (e) => {
-          if (e.button !== 0) return;
-          isDragging = true;
-          startX = e.clientX - translateX;
-          startY = e.clientY - translateY;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (!isDragging) return;
-          translateX = e.clientX - startX;
-          translateY = e.clientY - startY;
-          applyTransform();
-        });
-
-        window.addEventListener('mouseup', () => {
-          isDragging = false;
-        });
-
-        viewport.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-          scale = Math.max(0.3, Math.min(scale * zoomFactor, 3.0));
-          applyTransform();
-        }, { passive: false });
-
-        viewport.addEventListener('dblclick', () => {
-          setupTransformAndFraming();
-        });
-      }
-    });
-  </script>
+  <script src="client/js/wireframe-app.js"></script>
 </body>
 </html>
