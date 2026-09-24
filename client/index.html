@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Game - Planetary Grid Wireframe</title>
+  <link rel="stylesheet" href="/css/wireframe.css">
+</head>
+<body>
+
+  <!-- Fullscreen Wireframe Viewport (Centered on 1 Block with neighbouring blocks partially visible) -->
+  <div id="viewport" class="viewport">
+    <div id="world" class="world">
+      <!-- Zone Container (3x3 Blocks) -->
+      <div id="zone-container" class="zone-boundary">
+        <div class="zone-badge">ZONE-01 [3x3 BLOCKS]</div>
+        <div id="zone-grid" class="zone-grid">
+          <!-- 3x3 Blocks (each 10x10 Plots) rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal floating tooltip on plot hover -->
+  <div id="plot-tooltip" class="plot-tooltip"></div>
+
+  <script src="/js/wireframe-app.js"></script>
+</body>
+</html>

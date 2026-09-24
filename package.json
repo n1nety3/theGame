@@ -1,0 +1,13 @@
+{
+  "name": "the-game",
+  "version": "0.1.0",
+  "description": "Online Game - Planetary Grid Architecture (Planet > Zone > Block > Plot)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "keywords": ["game", "grid", "planet", "threejs", "wireframe"],
+  "author": "",
+  "license": "MIT"
+}
